@@ -1,6 +1,7 @@
 from oem_framework.core.elapsed import Elapsed
 from oem_updater.core.sources.base import Source
-from oem_database_updater_anidb.parser import Parser
+from oem_database_updater_anidb.constants import COLLECTIONS
+from oem_database_updater_anidb.parsers import Parser
 
 from xml.etree import ElementTree
 import logging
@@ -12,8 +13,10 @@ log = logging.getLogger(__name__)
 
 class AniDB(Source):
     __key__ = 'anidb'
+    __collections__ = COLLECTIONS
+
     __parameters__ = [
-        {'name': 'source', 'kwargs': {'required': True}}
+        {'name': 'source'}
     ]
 
     def __init__(self, collection, **kwargs):
@@ -27,12 +30,12 @@ class AniDB(Source):
         source_path = self.param('source')
 
         if not source_path:
-            log.warn('Missing "source" parameter')
+            log.error('Invalid value provided for the "--anidb-source" parameter')
             return False
 
         # Ensure `source_path` exists
         if not os.path.exists(source_path):
-            log.warn('Path %r doesn\'t exist', source_path)
+            log.error('Path %r doesn\'t exist', source_path)
             return False
 
         # Process items
@@ -74,7 +77,7 @@ class AniDB(Source):
     @Elapsed.track
     def process_one(self, node):
         # Parse item into the oem data-structure
-        item = Parser.parse_item(self.collection, node)
+        item = Parser.parse(self.collection, node)
 
         if not item:
             # Invalid item for collection
