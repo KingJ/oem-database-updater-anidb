@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<anime-list>
+  <anime anidbid="5894" tvdbid="137151" defaulttvdbseason="0">
+    <name>Cobra The Animation: The Psychogun</name>
+  </anime>
+  <anime anidbid="6392" tvdbid="137151" defaulttvdbseason="1">
+    <name>Cobra The Animation: Time Drive</name>
+    <mapping-list>
+      <mapping anidbseason="1" tvdbseason="0">;1-5;2-6;</mapping>
+    </mapping-list>
+  </anime>
+  <anime anidbid="6494" tvdbid="137151" defaulttvdbseason="1">
+    <name>Cobra The Animation</name>
+  </anime>
+</anime-list>
