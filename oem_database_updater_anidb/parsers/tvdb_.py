@@ -5,6 +5,18 @@ from oem_database_updater_anidb.parsers.core.base import BaseParser
 
 import logging
 
+IGNORE_IDENTIFIERS = [
+    'hentai',
+    'movie',
+    'music video',
+    'other',
+    'OVA',
+    'tv special',
+    'tvspecial',
+    'unknown',
+    'web'
+]
+
 log = logging.getLogger(__name__)
 
 
@@ -25,10 +37,9 @@ class TVDbParser(BaseParser):
             return None
 
         # Retrieve TVDB identifier
-        tvdb_id = node.attrib.get('tvdbid')
+        tvdb_ids = node.attrib.get('tvdbid', '').split(',')
 
-        if not tvdb_id or try_convert(tvdb_id, int) is None:
-            log.warn('Item has an invalid TVDb identifier: %r (anidb_id: %r)', tvdb_id, anidb_id)
+        if not cls._validate_identifier(tvdb_ids):
             return None
 
         # Construct item
@@ -38,7 +49,7 @@ class TVDbParser(BaseParser):
 
             identifiers=cls.parse_identifiers({
                 'anidb': anidb_id,
-                'tvdb': tvdb_id
+                'tvdb': tvdb_ids
             }),
             names={},
 
@@ -63,3 +74,27 @@ class TVDbParser(BaseParser):
             AbsoluteMapper.process(collection, item)
 
         return item
+
+    @staticmethod
+    def _validate_identifier(tvdb_ids):
+        if not tvdb_ids:
+            log.warn('Item has an invalid TVDb identifier: %r', tvdb_ids)
+            return False
+
+        valid = False
+
+        for tvdb_id in tvdb_ids:
+            if tvdb_id in IGNORE_IDENTIFIERS:
+                continue
+
+            if not tvdb_id:
+                log.warn('Item has an invalid TVDb identifier: %r', tvdb_id)
+                continue
+
+            if try_convert(tvdb_id, int) is None:
+                log.warn('Item has an invalid TVDb identifier: %r', tvdb_id)
+                return None
+
+            valid = True
+
+        return valid

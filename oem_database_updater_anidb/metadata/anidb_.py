@@ -42,7 +42,7 @@ class AniDbMetadata(object):
         try:
             item = cls.client.anime(anidb_id)
         except Exception as ex:
-            log.warn('Unable to retrieve %r from anidb.net - %s', anidb_id, ex)
+            log.warn('Unable to retrieve %r from anidb.net - %s', anidb_id, ex, exc_info=True)
             cls.cache[anidb_id] = None
             return None
 

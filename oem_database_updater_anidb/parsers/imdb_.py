@@ -25,10 +25,9 @@ class IMDbParser(BaseParser):
             return None
 
         # Retrieve IMDB identifier
-        imdb_id = node.attrib.get('imdbid')
+        imdb_ids = node.attrib.get('imdbid', '').split(',')
 
-        if not imdb_id or try_convert(imdb_id, int) is None:
-            log.warn('Item has an invalid IMDB identifier: %r (anidb_id: %r)', imdb_id, anidb_id)
+        if not cls._validate_identifier(imdb_ids):
             return None
 
         # Construct item
@@ -38,7 +37,7 @@ class IMDbParser(BaseParser):
 
             identifiers=cls.parse_identifiers({
                 'anidb': anidb_id,
-                'imdb': imdb_id
+                'imdb': imdb_ids
             }),
             names={},
 
@@ -63,3 +62,27 @@ class IMDbParser(BaseParser):
             AbsoluteMapper.process(collection, item)
 
         return item
+
+    @staticmethod
+    def _validate_identifier(imdb_ids):
+        if not imdb_ids:
+            log.warn('Item has an invalid IMDB identifier: %r', imdb_ids)
+            return False
+
+        valid = False
+
+        for imdb_id in imdb_ids:
+            if imdb_id == 'unknown':
+                continue
+
+            if not imdb_id:
+                log.warn('Item has an invalid IMDB identifier: %r', imdb_id)
+                continue
+
+            if not imdb_id.startswith('tt') or try_convert(imdb_id[2:], int) is None:
+                log.warn('Item has an invalid IMDB identifier: %r', imdb_id)
+                continue
+
+            valid = True
+
+        return valid
