@@ -84,25 +84,45 @@ class AniDB(Source):
             return True, False
 
         # Update item (if not already stored)
-        return self.update(self.collection.source, node, item)
+        return self.update(self.collection.source, self.collection.target, node, item)
 
     @Elapsed.track
-    def update(self, service, node, item):
+    def update(self, source, target, node, item):
         # Determine item key
-        if service == 'anidb':
+        # TODO this should be moved to a separate method:
+        if source == 'anidb':
             key = node.attrib.get('anidbid')
-            hash_key = node.attrib.get('imdbid') or node.attrib.get('tvdbid')
-        elif service == 'imdb':
+
+            if target == 'imdb':
+                hash_key = node.attrib.get('imdbid')
+            elif target == 'tvdb':
+                hash_key = node.attrib.get('tvdbid')
+            elif target == 'tmdb:movie':
+                hash_key = node.attrib.get('tmdbmid')
+
+                if node.attrib.get('tmdbid') != hash_key:
+                    raise ValueError('Mismatch detected between "tmdbid" and "tmdbmid", both identifiers should match')
+            elif target == 'tmdb:show':
+                hash_key = node.attrib.get('tmdbsid')
+            else:
+                raise ValueError('Unknown target: %r' % (target,))
+        elif source == 'imdb':
             key = node.attrib.get('imdbid')
             hash_key = node.attrib.get('anidbid')
-        elif service == 'tvdb':
+        elif source == 'tvdb':
             key = node.attrib.get('tvdbid')
             hash_key = node.attrib.get('anidbid')
-        elif service in COLLECTION_KEYS_TMDB:
-            key = node.attrib.get('tmdbid')
+        elif source == 'tmdb:movie':
+            key = node.attrib.get('tmdbmid')
+            hash_key = node.attrib.get('anidbid')
+
+            if node.attrib.get('tmdbid') != key:
+                raise ValueError('Mismatch detected between "tmdbid" and "tmdbmid", both identifiers should match')
+        elif source == 'tmdb:show':
+            key = node.attrib.get('tmdbsid')
             hash_key = node.attrib.get('anidbid')
         else:
-            raise ValueError('Unknown service: %r' % (service,))
+            raise ValueError('Unknown source: %r' % (source,))
 
         # Update items
         updated = False
@@ -112,10 +132,10 @@ class AniDB(Source):
                 continue
 
             # Update item identifiers
-            item.identifiers[service] = service_key
+            item.identifiers[source] = service_key
 
             # Process item update
-            i_success, i_updated = self.update_one(service, service_key, hash_key, item)
+            i_success, i_updated = self.update_one(source, service_key, hash_key, item)
 
             if not i_success:
                 return False, i_updated
@@ -154,7 +174,9 @@ class AniDB(Source):
             if (service, service_key) in self.updated:
                 log.debug('Updating item: %s/%s', service, service_key)
             elif metadata.hashes.get(hash_key) == hash:
-                return True, False
+                # Ensure no duplicate hashes exist
+                if len(metadata.hashes) == len(set(metadata.hashes.values())):
+                    return True, False
             elif hash_key in metadata.hashes:
                 log.debug('Updating item: %s/%s (%r != %r)', service, service_key, metadata.hashes[hash_key], hash)
         else:
