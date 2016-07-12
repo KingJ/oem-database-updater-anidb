@@ -28,7 +28,11 @@ class Parser(BaseParser):
         if (source in COLLECTION_KEYS_IMDB or target in COLLECTION_KEYS_IMDB) and 'imdbid' in node.attrib:
             return IMDbParser
 
-        if (source in COLLECTION_KEYS_TMDB or target in COLLECTION_KEYS_TMDB) and 'tmdbid' in node.attrib:
+        if (source in COLLECTION_KEYS_TMDB or target in COLLECTION_KEYS_TMDB) and (
+            'tmdbid' in node.attrib or
+            'tmdbmid' in node.attrib or
+            'tmdbsid' in node.attrib
+        ):
             return TMDbParser
 
         if (source in COLLECTION_KEYS_TVDB or target in COLLECTION_KEYS_TVDB) and 'tvdbid' in node.attrib:

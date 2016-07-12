@@ -1,6 +1,6 @@
 from oem_framework.core.elapsed import Elapsed
 from oem_updater.core.sources.base import Source
-from oem_database_updater_anidb.constants import COLLECTIONS
+from oem_database_updater_anidb.constants import COLLECTIONS, COLLECTION_KEYS_TMDB
 from oem_database_updater_anidb.parsers import Parser
 
 from xml.etree import ElementTree
@@ -98,8 +98,11 @@ class AniDB(Source):
         elif service == 'tvdb':
             key = node.attrib.get('tvdbid')
             hash_key = node.attrib.get('anidbid')
+        elif service in COLLECTION_KEYS_TMDB:
+            key = node.attrib.get('tmdbid')
+            hash_key = node.attrib.get('anidbid')
         else:
-            raise ValueError('Unknown service: %r' % service)
+            raise ValueError('Unknown service: %r' % (service,))
 
         # Update items
         updated = False
@@ -168,6 +171,6 @@ class AniDB(Source):
         # log.debug('[%-5s] Updating item: %r (revision: %r)', service, service_key, metadata.revision)
 
         if not metadata.update(current, hash_key, hash):
-            log.warn('[%-5s] Unable to update item: %r (revision: %r)', service, service_key, metadata.revision)
+            log.warn('[%-5s] Unable to update item: %r', service, service_key)
 
         return True, True

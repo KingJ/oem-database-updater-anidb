@@ -3,8 +3,8 @@ COLLECTIONS = [
     ('anidb', 'imdb'),
 
     # TMDb
-    ('anidb', ('tmdb', 'movie')),
-    ('anidb', ('tmdb', 'show')),
+    ('anidb', 'tmdb:movie'),
+    ('anidb', 'tmdb:show'),
 
     # TheTVDb
     ('anidb', 'tvdb')
@@ -20,14 +20,14 @@ COLLECTIONS_MOVIES = [
     ('imdb', 'anidb'),
 
     # TMDb
-    ('anidb', ('tmdb', 'movie')),
-    (('tmdb', 'movie'), 'anidb')
+    ('anidb', 'tmdb:movie'),
+    ('tmdb:movie', 'anidb')
 ]
 
 COLLECTIONS_SHOWS = [
     # TMDb
-    ('anidb', ('tmdb', 'show')),
-    (('tmdb', 'show'), 'anidb'),
+    ('anidb', 'tmdb:show'),
+    ('tmdb:show', 'anidb'),
 
     # TheTVDb
     ('anidb', 'tvdb'),
@@ -43,8 +43,8 @@ COLLECTION_KEYS_IMDB = [
 ]
 
 COLLECTION_KEYS_TMDB = [
-    ('tmdb', 'movie'),
-    ('tmdb', 'show')
+    'tmdb:movie',
+    'tmdb:show'
 ]
 
 COLLECTION_KEYS_TVDB = [

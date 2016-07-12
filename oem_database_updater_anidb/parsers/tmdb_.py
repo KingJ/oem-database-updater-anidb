@@ -1,3 +1,4 @@
+from oem_database_updater_anidb.constants import COLLECTION_KEYS_TMDB
 from oem_database_updater_anidb.metadata.anidb_ import AniDbMetadata
 from oem_database_updater_anidb.metadata.tmdb_ import TMDbMetadata
 from oem_database_updater_anidb.parsers.core.absolute import AbsoluteMapper
@@ -27,20 +28,31 @@ class TMDbParser(BaseParser):
             return None
 
         # Retrieve TMDb identifier
-        tmdb_id = node.attrib.get('tmdbid')
+        media, tmdb_ids = cls._get_tmdb_identifier(node)
 
-        if not tmdb_id or try_convert(tmdb_id, int) is None:
-            log.warn('Item has an invalid TMDb identifier: %r (anidb_id: %r)', tmdb_id, anidb_id)
+        if not media or media != cls.get_collection_media(collection):
+            return None
+
+        if not cls._validate_identifier(tmdb_ids):
+            return None
+
+        # Retrieve identifier key
+        if collection.source in COLLECTION_KEYS_TMDB:
+            identifier_key = collection.source
+        elif collection.target in COLLECTION_KEYS_TMDB:
+            identifier_key = collection.target
+        else:
+            log.warn('Unable to find identifier key')
             return None
 
         # Construct item
         item = Item.construct(
             collection=collection,
-            media=cls.get_collection_media(collection),
+            media=media,
 
             identifiers=cls.parse_identifiers({
                 'anidb': anidb_id,
-                'tmdb': tmdb_id
+                identifier_key: tmdb_ids
             }),
             names={},
 
@@ -52,22 +64,19 @@ class TMDbParser(BaseParser):
         cls.parse_names(item, collection, node)
 
         # Fetch AniDb metadata
-        anidb_metadata = AniDbMetadata.fetch(anidb_id)
+        metadata_anidb = AniDbMetadata.fetch(anidb_id)
 
-        if not anidb_metadata:
-            log.error('Unable to fetch metadata from AniDb')
-            exit(1)
+        if not metadata_anidb:
+            log.error('Unable to fetch %r from AniDb', anidb_id)
+            return None
 
         # Fetch TMDb metadata
-        tmdb_metadata = TMDbMetadata.fetch(tmdb_id, item.media)
+        for tmdb_id in tmdb_ids:
+            metadata_tmdb = TMDbMetadata.fetch(tmdb_id, item.media)
 
-        if not tmdb_metadata:
-            log.error('Unable to fetch metadata from TMDb')
-            exit(1)
-
-        # Verify item against TMDb
-        if not cls.verify(item, anidb_metadata, tmdb_metadata):
-            return None
+            if not metadata_tmdb:
+                log.error('Unable to fetch %r from TMDb', tmdb_id)
+                return None
 
         # Parse mappings
         mappings = list(node.findall('mapping-list//mapping'))
@@ -85,18 +94,42 @@ class TMDbParser(BaseParser):
         return item
 
     @classmethod
-    def verify(cls, item, anidb_metadata, tmdb_metadata):
-        if item.media == 'movie':
-            return cls.verify_movie(item, anidb_metadata, tmdb_metadata)
-        elif item.media == 'show':
-            return cls.verify_show(item, anidb_metadata, tmdb_metadata)
+    def _get_tmdb_identifier(cls, node):
+        if 'tmdbmid' in node.attrib:
+            if node.attrib.get('tmdbid') != node.attrib['tmdbmid']:
+                log.warn('Item %r "tmdbid" should be set to the same value as "tmdbmid"', node.attrib.get('anidbid'))
 
-        return False
+            return 'movie', node.attrib['tmdbmid'].split(',')
 
-    @classmethod
-    def verify_movie(cls, item, anidb_metadata, tmdb_metadata):
-        return False
+        if 'tmdbsid' in node.attrib:
+            return 'show', node.attrib['tmdbsid'].split(',')
 
-    @classmethod
-    def verify_show(cls, item, anidb_metadata, tmdb_metadata):
-        return False
+        if 'tmdbid' in node.attrib:
+            log.warn('Item %r is missing the new-style tmdb identifier', node.attrib.get('anidbid'))
+            return None, None
+
+        return None, None
+
+    @staticmethod
+    def _validate_identifier(tmdb_ids):
+        if not tmdb_ids:
+            log.warn('Item has an invalid TMDb identifier: %r', tmdb_ids)
+            return False
+
+        valid = False
+
+        for tmdb_id in tmdb_ids:
+            if tmdb_id == 'unknown':
+                continue
+
+            if not tmdb_id:
+                log.warn('Item has an invalid TMDb identifier: %r', tmdb_id)
+                continue
+
+            if try_convert(tmdb_id, int) is None:
+                log.warn('Item has an invalid TMDb identifier: %r', tmdb_id)
+                return None
+
+            valid = True
+
+        return valid

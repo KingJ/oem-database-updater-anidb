@@ -1,5 +1,6 @@
 from oem_updater.core.constants import TMDB_API_KEY
 
+from requests import HTTPError
 import tmdbsimple as tmdb
 
 # Configure TMDb client
@@ -26,8 +27,11 @@ class TMDbMetadata(object):
         else:
             raise NotImplementedError('Unsupported media type: %r' % media)
 
-        item.info()
+        try:
+            item.info()
+        except HTTPError:
+            item = None
 
         # Store item in cache
-        cls.cache[media] = item
+        cls.cache[media][tmdb_id] = item
         return item
