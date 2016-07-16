@@ -115,12 +115,16 @@ class AbsoluteMapper(object):
                 continue
 
             # Construct season mapping
+            episode_count = len([
+                e for e in season.itervalues() if e['episodenumber'] != '0'
+            ])
+
             item.seasons['1'].mappings.append(
                 SeasonMapping(
                     item.collection, season_num,
 
                     start=absolute_num,
-                    end=absolute_num + len(season) - 1,
+                    end=absolute_num + episode_count - 1,
 
                     offset=1 - absolute_num
                 )

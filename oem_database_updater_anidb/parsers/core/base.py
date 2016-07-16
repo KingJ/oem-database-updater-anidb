@@ -1,21 +1,16 @@
-from oem_framework.core.elapsed import Elapsed
-from oem_framework.core.helpers import try_convert
-from oem_updater.models import Item, Season, SeasonMapping, Episode, EpisodeMapping, Range
-from oem_database_updater_anidb.absolute import AbsoluteMapper
+from oem_updater.models import Season, SeasonMapping, Episode, EpisodeMapping, Range
+from oem_database_updater_anidb.constants import COLLECTIONS_MOVIES, COLLECTIONS_SHOWS
 
-import logging
 import re
 
-log = logging.getLogger(__name__)
 
-
-class Parser(object):
-    __version__ = 0x00
+class BaseParser(object):
+    @classmethod
+    def parse(cls, collection, node, use_absolute_mapper=True):
+        raise NotImplementedError
 
     @classmethod
-    @Elapsed.track
-    def parse_item(cls, collection, node, use_absolute_mapper=True):
-        # Retrieve AniDb identifier
+    def get_anidb_id(cls, node):
         anidb_id = node.attrib.get('anidbid').split(',')
 
         if len(anidb_id) == 1:
@@ -23,60 +18,22 @@ class Parser(object):
         elif len(anidb_id) < 1:
             anidb_id = None
 
-        # Retrieve default season
-        default_season = node.attrib.get('defaulttvdbseason')
+        return anidb_id
 
-        if default_season is None:
-            return None
+    @classmethod
+    def get_collection_media(cls, collection):
+        key = (collection.source, collection.target)
 
-        # Construct item
-        item = Item.construct(
-            collection=collection,
-            media=cls.get_media(collection),
+        if key in COLLECTIONS_MOVIES:
+            return 'movie'
 
-            identifiers={'anidb': anidb_id},
-            names={},
+        if key in COLLECTIONS_SHOWS:
+            return 'show'
 
-            default_season=default_season,
-            episode_offset=node.attrib.get('episodeoffset')
-        )
+        raise Exception('Unknown collection media: %r' % collection)
 
-        imdb_id = node.attrib.get('imdbid')
-        tvdb_id = node.attrib.get('tvdbid')
-        mappings = list(node.findall('mapping-list//mapping'))
-        supplemental = node.find('supplemental-info')
-
-        # Add target identifiers
-        if collection.source == 'imdb' or collection.target == 'imdb':
-            if imdb_id and imdb_id.startswith('tt'):
-                item.identifiers['imdb'] = imdb_id.split(',')
-            else:
-                # Invalid item
-                return None
-        elif collection.source == 'tvdb' or collection.target == 'tvdb':
-            if tvdb_id and try_convert(tvdb_id, int) is not None:
-                item.identifiers['tvdb'] = tvdb_id.split(',')
-            else:
-                # Invalid item
-                return None
-        else:
-            raise ValueError('Unknown service for: %r' % collection)
-
-        for service, keys in item.identifiers.items():
-            if type(keys) is not list:
-                continue
-
-            # Filter out "unknown" identifiers
-            item.identifiers[service] = [
-                key for key in item.identifiers[service]
-                if key != 'unknown'
-            ]
-
-            # Collapse lists with only 1 key
-            if len(keys) < 2:
-                item.identifiers[service] = keys[0]
-
-        # Parse names
+    @classmethod
+    def parse_names(cls, item, collection, node):
         target_key = item.identifiers[collection.target]
 
         if type(target_key) is list:
@@ -85,41 +42,42 @@ class Parser(object):
         else:
             item.names[target_key] = set([node.find('name').text])
 
-        # Parse mappings
-        if item.media == 'show' and not cls.parse_mappings(collection, item, mappings):
-            return None
+    @classmethod
+    def parse_supplemental(cls, item, node):
+        supplemental = node.find('supplemental-info')
 
-        # Add supplemental
-        if supplemental is not None:
-            item.supplemental = {}
+        if supplemental is None:
+            return
 
-            # TODO store all supplemental nodes
-            for key in ['studio']:
-                node = supplemental.find(key)
+        item.supplemental = {}
 
-                if node is not None:
-                    item.supplemental[key] = node.text
+        # TODO store all supplemental nodes
+        for key in ['studio']:
+            node = supplemental.find(key)
 
-        # Convert absolute mappings (if enabled)
-        if use_absolute_mapper:
-            AbsoluteMapper.process(collection, item)
-
-        return item
+            if node is not None:
+                item.supplemental[key] = node.text
 
     @classmethod
-    def get_media(cls, collection):
-        key = (collection.source, collection.target)
+    def parse_identifiers(cls, identifiers):
+        for service, keys in identifiers.items():
+            if type(keys) is not list:
+                continue
 
-        if key in [('anidb', 'tvdb'), ('tvdb', 'anidb')]:
-            return 'show'
+            # Filter out "unknown" identifiers
+            identifiers[service] = [
+                key for key in identifiers[service]
+                if key != 'unknown'
+            ]
 
-        if key in [('anidb', 'imdb'), ('imdb', 'anidb')]:
-            return 'movie'
+            # Collapse lists with only 1 key
+            if len(keys) < 2:
+                identifiers[service] = keys[0]
 
-        raise Exception('Unknown collection media: %r' % collection)
+        return identifiers
 
     @classmethod
-    def parse_mappings(cls, collection, item, mappings):
+    def parse_mappings(cls, item, collection, mappings):
         if not mappings:
             return True
 

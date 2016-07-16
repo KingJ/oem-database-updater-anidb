@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<anime-list>
+  <anime anidbid="3395" tvdbid="79604" defaulttvdbseason="1">
+    <name>Black Lagoon</name>
+    <mapping-list>
+      <mapping anidbseason="0" tvdbseason="0">;5-0;</mapping>
+    </mapping-list>
+  </anime>
+  <anime anidbid="4597" tvdbid="79604" defaulttvdbseason="1" episodeoffset="12">
+    <name>Black Lagoon: The Second Barrage</name>
+    <mapping-list>
+      <mapping anidbseason="0" tvdbseason="0">;1-5;2-6;3-7;</mapping>
+    </mapping-list>
+  </anime>
+  <anime anidbid="6645" tvdbid="79604" defaulttvdbseason="0" episodeoffset="7">
+    <name>Black Lagoon: Roberta's Blood Trail</name>
+    <mapping-list>
+      <mapping anidbseason="0" tvdbseason="0" start="1" end="5" offset="12"/>
+    </mapping-list>
+  </anime>
+</anime-list>
