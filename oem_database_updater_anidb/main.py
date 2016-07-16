@@ -1,6 +1,6 @@
 from oem_framework.core.elapsed import Elapsed
 from oem_updater.core.sources.base import Source
-from oem_database_updater_anidb.constants import COLLECTIONS, COLLECTION_KEYS_TMDB
+from oem_database_updater_anidb.constants import COLLECTIONS
 from oem_database_updater_anidb.parsers import Parser
 
 from xml.etree import ElementTree
