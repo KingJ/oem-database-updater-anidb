@@ -1,5 +1,4 @@
 appdirs>=1.4.0
-msgpack-python>=0.4.7
 six>=1.10.0
 
 -e git://github.com/fuzeman/anidb.py.git#egg=anidb.py
