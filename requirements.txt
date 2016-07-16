@@ -1,5 +1,5 @@
 oem-framework>=1.1.0
-oem-core>=1.1.0
+oem-core>=1.2.0
 oem-database-updater>=1.1.0
 
 appdirs>=1.4.0
