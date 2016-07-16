@@ -1,0 +1,29 @@
+language: python
+python:
+- '2.6'
+- '2.7'
+- '3.2'
+- '3.3'
+- '3.4'
+- '3.5'
+install:
+- pip install -U setuptools
+- pip install tox-travis
+- if [[ $TRAVIS_PYTHON_VERSION == 3.2 ]]; then pip install "virtualenv<14.0.0"; fi
+script:
+- export CURRENT_BRANCH=$(if [ -n "$TRAVIS_TAG" ]; then echo "master"; else echo "$TRAVIS_BRANCH"; fi)
+- tox
+after_success: python setup.py sdist bdist_wheel
+deploy:
+  provider: releases
+  api_key:
+    secure: iYBwJEPvnyXN9cP1M/C0n6jGQcf6tJfohlR0hKly2gzfJH85FxgtA6hTvEIY6Cr7udqTXe1DjOpzOw+Tzq3z3w6yLI13Wle/xG1vU5mI4aU5gawCkXys8zWlWB+Sqq1UJRilJPKHp+IYc9exP6h9vxk7WL3w2vLrJk3iTso7vtMaecqQ8CQCmZ1Ty+6vjBp293esXbANtQUztyXItlzozR3swGgWK7M2PwtbaGctEUEFzlfC/vzng/rB+nX1np4eXK59ZAcqn87MpXNSfUalk2lIjDbhrdx/enyBfPU71vScnwLrtfYEUKdXjibIy4XpavJsC8cwiW8huVePOL86A5bfSVbwug05Hvw9H2v0BEfCOejCBu6bbrIdiKD1UWJzbyBZBMNg42yKdj3cpa3+omGsoekF8BnMKBXY4XClKV93R3FyECtlgSlB4GX7gjI0IExEi5IeDKWK9yUBDMOgBdXoUnSa5++NIvNuykPN8e2Qd83hQDD5m/UZDXwLh/q7huoNXvZz4qZsm2fXzoZjRD3rgPvmlG43wpw4NUsbMsnfmNZ05e/gxzjT8oKcH8Htjxy5VzZEUeWtXY9/4mU60byr/ste8TskjJDVP/l4Sgnfd6ZBGnl/4mMzNB9Wr+u4mYwKBKkR+45vT8DD5JEiwgy6gerR4mXOUb0mOWre5x4=
+  skip_cleanup: true
+  file_glob: true
+  file:
+  - "dist/oem-database-updater-anidb-*"
+  - "dist/oem_database_updater_anidb-*"
+  on:
+    repo: OpenEntityMap/oem-database-updater-anidb
+    condition: $TRAVIS_PYTHON_VERSION = "2.7"
+    tags: true
