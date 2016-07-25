@@ -71,7 +71,9 @@ class TMDbParser(BaseParser):
             yield item
 
     @classmethod
-    def parse_one(cls, collection, node, media, anidb_id, tmdb_id, default_season, episode_offset, use_absolute_mapper=True):
+    def parse_one(cls, collection, node, media, anidb_id, tmdb_id, default_season, episode_offset,
+                  use_absolute_mapper=True):
+
         # Retrieve identifier key
         if collection.source in COLLECTION_KEYS_TMDB:
             identifier_key = collection.source

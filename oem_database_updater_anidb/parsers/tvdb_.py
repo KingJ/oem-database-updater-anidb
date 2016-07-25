@@ -32,7 +32,6 @@ class TVDbParser(BaseParser):
         # Retrieve episode offset (and cast to integer)
         episode_offset = try_convert(node.attrib.get('episodeoffset'), int, 0)
 
-
         # Retrieve AniDB identifier
         anidb_id = cls.get_anidb_id(node)
 
