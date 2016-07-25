@@ -13,7 +13,7 @@ class Parser(BaseParser):
         parser = cls.get_parser(collection, node)
 
         if not parser:
-            return None
+            return []
 
         return parser.parse(
             collection, node,

@@ -18,24 +18,60 @@ class TMDbParser(BaseParser):
         default_season = node.attrib.get('defaulttvdbseason')
 
         if default_season is None:
-            return None
+            return
+
+        # Retrieve episode offset (and cast to integer)
+        episode_offset = try_convert(node.attrib.get('episodeoffset'), int, 0)
 
         # Retrieve AniDB identifier
         anidb_id = cls.get_anidb_id(node)
 
         if anidb_id is None:
             log.warn('Item has an invalid AniDB identifier: %r ', anidb_id)
-            return None
+            return
 
         # Retrieve TMDb identifier
         media, tmdb_ids = cls._get_tmdb_identifier(node)
 
         if not media or media != cls.get_collection_media(collection):
-            return None
+            return
 
         if not cls._validate_identifier(tmdb_ids):
-            return None
+            return
 
+        # Parse items
+        for x, tmdb_id in enumerate(tmdb_ids):
+            if tmdb_id == 'unknown':
+                continue
+
+            # Determine item episode offset
+            i_episode_offset = episode_offset
+
+            if len(tmdb_ids) > 1:
+                i_episode_offset = (episode_offset or 0) + x
+
+            if i_episode_offset is not None:
+                if i_episode_offset != 0:
+                    i_episode_offset = str(i_episode_offset)
+                else:
+                    i_episode_offset = None
+
+            # Construct item
+            item = cls.parse_one(
+                collection, node, media,
+                anidb_id, tmdb_id,
+                default_season,
+                i_episode_offset,
+                use_absolute_mapper=use_absolute_mapper
+            )
+
+            if not item:
+                continue
+
+            yield item
+
+    @classmethod
+    def parse_one(cls, collection, node, media, anidb_id, tmdb_id, default_season, episode_offset, use_absolute_mapper=True):
         # Retrieve identifier key
         if collection.source in COLLECTION_KEYS_TMDB:
             identifier_key = collection.source
@@ -52,12 +88,12 @@ class TMDbParser(BaseParser):
 
             identifiers=cls.parse_identifiers({
                 'anidb': anidb_id,
-                identifier_key: tmdb_ids
+                identifier_key: tmdb_id
             }),
             names={},
 
             default_season=default_season,
-            episode_offset=node.attrib.get('episodeoffset')
+            episode_offset=episode_offset
         )
 
         # Parse names
@@ -71,12 +107,11 @@ class TMDbParser(BaseParser):
             return None
 
         # Fetch TMDb metadata
-        for tmdb_id in tmdb_ids:
-            metadata_tmdb = TMDbMetadata.fetch(tmdb_id, item.media)
+        metadata_tmdb = TMDbMetadata.fetch(tmdb_id, item.media)
 
-            if not metadata_tmdb:
-                log.error('Unable to fetch %r from TMDb', tmdb_id)
-                return None
+        if not metadata_tmdb:
+            log.error('Unable to fetch %r from TMDb', tmdb_id)
+            return None
 
         # Parse mappings
         mappings = list(node.findall('mapping-list//mapping'))

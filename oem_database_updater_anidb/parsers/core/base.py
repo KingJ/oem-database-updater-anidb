@@ -67,7 +67,7 @@ class BaseParser(object):
             # Filter out "unknown" identifiers
             identifiers[service] = [
                 key for key in identifiers[service]
-                if key != 'unknown'
+                if len(identifiers[service]) > 1 or key != 'unknown'
             ]
 
             # Collapse lists with only 1 key
