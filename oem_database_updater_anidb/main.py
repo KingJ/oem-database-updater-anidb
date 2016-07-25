@@ -76,15 +76,21 @@ class AniDB(Source):
 
     @Elapsed.track
     def process_one(self, node):
-        # Parse item into the oem data-structure
-        item = Parser.parse(self.collection, node)
+        updated = False
 
-        if not item:
-            # Invalid item for collection
-            return True, False
+        for item in Parser.parse(self.collection, node):
+            # Update item (if not already stored)
+            i_success, i_updated = self.update(self.collection.source, self.collection.target, node, item)
 
-        # Update item (if not already stored)
-        return self.update(self.collection.source, self.collection.target, node, item)
+            # Update state
+            updated |= i_updated
+
+            if not i_success:
+                # Error detected, stop processing of item
+                return False, updated
+
+        # Invalid item for collection
+        return True, updated
 
     @Elapsed.track
     def update(self, source, target, node, item):
@@ -106,21 +112,15 @@ class AniDB(Source):
                 hash_key = node.attrib.get('tmdbsid')
             else:
                 raise ValueError('Unknown target: %r' % (target,))
-        elif source == 'imdb':
-            key = node.attrib.get('imdbid')
-            hash_key = node.attrib.get('anidbid')
-        elif source == 'tvdb':
-            key = node.attrib.get('tvdbid')
-            hash_key = node.attrib.get('anidbid')
         elif source == 'tmdb:movie':
-            key = node.attrib.get('tmdbmid')
-            hash_key = node.attrib.get('anidbid')
+            key = item.identifiers.get('tmdb:movie')
+            hash_key = item.identifiers.get('anidb')
 
-            if node.attrib.get('tmdbid') != key:
+            if key not in node.attrib.get('tmdbid'):
                 raise ValueError('Mismatch detected between "tmdbid" and "tmdbmid", both identifiers should match')
-        elif source == 'tmdb:show':
-            key = node.attrib.get('tmdbsid')
-            hash_key = node.attrib.get('anidbid')
+        elif source in item.identifiers:
+            key = item.identifiers.get(source)
+            hash_key = item.identifiers.get('anidb')
         else:
             raise ValueError('Unknown source: %r' % (source,))
 

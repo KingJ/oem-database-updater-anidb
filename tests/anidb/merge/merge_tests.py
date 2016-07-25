@@ -18,17 +18,13 @@ def merge_items(collection, filename):
         if node.tag != 'anime':
             continue
 
-        # Parse item
-        item = Parser.parse(collection, node, use_absolute_mapper=False)
-
-        if item is None:
-            continue
-
-        # Update `current` item
-        if current is None:
-            current = item
-        else:
-            current.add(item, 'tvdb')
+        # Parse items
+        for item in Parser.parse(collection, node, use_absolute_mapper=False):
+            # Update `current` item
+            if current is None:
+                current = item
+            else:
+                current.add(item, 'tvdb')
 
     return current
 
