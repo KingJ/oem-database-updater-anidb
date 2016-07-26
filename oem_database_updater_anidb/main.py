@@ -99,17 +99,13 @@ class AniDB(Source):
         if source == 'anidb':
             key = node.attrib.get('anidbid')
 
-            if target == 'imdb':
-                hash_key = node.attrib.get('imdbid')
-            elif target == 'tvdb':
-                hash_key = node.attrib.get('tvdbid')
-            elif target == 'tmdb:movie':
-                hash_key = node.attrib.get('tmdbmid')
+            if target == 'tmdb:movie':
+                hash_key = item.identifiers.get('tmdb:movie')
 
-                if node.attrib.get('tmdbid') != hash_key:
+                if hash_key not in node.attrib.get('tmdbid'):
                     raise ValueError('Mismatch detected between "tmdbid" and "tmdbmid", both identifiers should match')
-            elif target == 'tmdb:show':
-                hash_key = node.attrib.get('tmdbsid')
+            elif target in item.identifiers:
+                hash_key = item.identifiers.get(target)
             else:
                 raise ValueError('Unknown target: %r' % (target,))
         elif source == 'tmdb:movie':
