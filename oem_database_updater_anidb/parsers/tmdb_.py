@@ -1,9 +1,9 @@
+from oem_framework.core.helpers import try_convert
+from oem_framework.models import Item
 from oem_database_updater_anidb.constants import COLLECTION_KEYS_TMDB
 from oem_database_updater_anidb.metadata.anidb_ import AniDbMetadata
 from oem_database_updater_anidb.metadata.tmdb_ import TMDbMetadata
 from oem_database_updater_anidb.parsers.core.absolute import AbsoluteMapper
-from oem_framework.core.helpers import try_convert
-from oem_framework.models import Item
 from oem_database_updater_anidb.parsers.core.base import BaseParser
 
 import logging
