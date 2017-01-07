@@ -1,6 +1,6 @@
-from oem_database_updater_anidb.parsers.core.absolute import AbsoluteMapper
 from oem_framework.core.helpers import try_convert
 from oem_framework.models import Item
+from oem_database_updater_anidb.parsers.core.absolute import AbsoluteMapper
 from oem_database_updater_anidb.parsers.core.base import BaseParser
 
 import logging
