@@ -19,8 +19,8 @@ class AniDB(Source):
         {'name': 'source'}
     ]
 
-    def __init__(self, collection, **kwargs):
-        super(AniDB, self).__init__(collection, **kwargs)
+    def __init__(self, collection, kwargs):
+        super(AniDB, self).__init__(collection, kwargs)
 
         self.seen = {}
         self.updated = {}
@@ -45,17 +45,19 @@ class AniDB(Source):
         return True
 
     def process(self, source_path):
-        items = ElementTree.iterparse(source_path)
+        progress = self.param('progress')
 
+        # Process items
         count_total = 0
         count_updated = 0
 
-        for _, item in items:
+        for _, item in ElementTree.iterparse(source_path):
             if item.tag != 'anime':
                 continue
 
-            sys.stdout.write('\r%s - (%05d/%05d)' % (self.collection, count_updated, count_total))
-            sys.stdout.flush()
+            if progress:
+                sys.stdout.write('\r%s - (%05d/%05d)' % (self.collection, count_updated, count_total))
+                sys.stdout.flush()
 
             count_total += 1
 
@@ -68,10 +70,9 @@ class AniDB(Source):
             if updated:
                 count_updated += 1
 
-            # if count_updated > 100:
-            #     break
+        if progress:
+            sys.stdout.write('\n')
 
-        sys.stdout.write('\n')
         return True
 
     @Elapsed.track
