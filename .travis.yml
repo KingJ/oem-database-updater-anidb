@@ -23,6 +23,6 @@ deploy:
   - "dist/oem-database-updater-anidb-*"
   - "dist/oem_database_updater_anidb-*"
   on:
-    repo: OpenEntityMap/oem-database-updater-anidb
+    repo: KingJ/oem-database-updater-anidb
     condition: $TRAVIS_PYTHON_VERSION = "2.7"
     tags: true
